@@ -1,0 +1,15 @@
+# Dependencies and generated output
+**/node_modules/
+**/.next/
+**/out/
+**/coverage/
+
+# Environment files and secrets
+**/.env
+**/.env.*
+!.env.example
+
+# Logs and local tooling
+*.log
+.DS_Store
+*.pem
