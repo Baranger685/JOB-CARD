@@ -1,0 +1,91 @@
+{
+  "labers": [
+    {
+      "id": 1,
+      "name": "Employee 1",
+      "age": null,
+      "role": "labor",
+      "password": null
+    }
+  ],
+  "laborers_data": [
+    {
+      "id": 1,
+      "laborers_id": 1,
+      "output": 100,
+      "efficiency": 500,
+      "smv": 12,
+      "manpower": 2,
+      "working_minutes": 120,
+      "date": "2026-05-04T18:30:00.000Z",
+      "status": "HIGH"
+    },
+    {
+      "id": 2,
+      "laborers_id": 1,
+      "output": 100,
+      "efficiency": 500,
+      "smv": 12,
+      "manpower": 2,
+      "working_minutes": 120,
+      "date": "2026-05-04T18:30:00.000Z",
+      "status": "HIGH"
+    },
+    {
+      "id": 3,
+      "laborers_id": 1,
+      "output": 27,
+      "efficiency": 270,
+      "smv": 12,
+      "manpower": 1,
+      "working_minutes": 120,
+      "date": "2026-05-04T18:30:00.000Z",
+      "status": "HIGH"
+    },
+    {
+      "id": 4,
+      "laborers_id": 1,
+      "output": 76,
+      "efficiency": 760,
+      "smv": 12,
+      "manpower": 1,
+      "working_minutes": 120,
+      "date": "2026-05-04T18:30:00.000Z",
+      "status": "HIGH"
+    },
+    {
+      "id": 5,
+      "laborers_id": 1,
+      "output": 77.0,
+      "efficiency": 770.0,
+      "smv": 12.0,
+      "manpower": 1.0,
+      "working_minutes": 120.0,
+      "date": "2026-05-04T18:30:00.000Z",
+      "status": "HIGH"
+    },
+    {
+      "id": 6,
+      "laborers_id": 1,
+      "output": 45.0,
+      "efficiency": 30.0,
+      "smv": 0.8,
+      "manpower": 1.0,
+      "working_minutes": 120.0,
+      "date": "2026-08-24",
+      "status": "LOW"
+    },
+    {
+      "id": 7,
+      "laborers_id": 1,
+      "output": 74.0,
+      "efficiency": 98.66666666666667,
+      "smv": 0.8,
+      "manpower": 1.0,
+      "working_minutes": 60.0,
+      "date": "2026-08-24",
+      "status": "HIGH"
+    }
+  ],
+  "supervisor_data": []
+}

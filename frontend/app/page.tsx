@@ -1,27 +1,31 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { labers, laborerData } from "@/lib/api";
+import { useEffect, useState, type FormEvent } from "react";
+import { labers, laborerData, type Employee, type LaborerLog } from "@/lib/api";
 
 const initialForm = {
   output: "",
-  smv: "",
+  smv: "12",
+  manpower: "1",
+  working_minutes: "60",
 };
 
-function calculateEfficiency(form) {
+function calculateEfficiency(form: Record<string, string>) {
   const output = Number(form.output);
   const smv = Number(form.smv);
+  const manpower = Number(form.manpower);
+  const workingMinutes = Number(form.working_minutes);
 
-  if (!output || !smv) return null;
-  return (output * smv) / 60 * 100;
+  if (!output || !smv || !manpower || !workingMinutes) return null;
+  return (output * smv) / (workingMinutes * manpower) * 100;
 }
 
 export default function LoginPage() {
-  const [employeeId, setEmployeeId] = useState("");
-  const [employee, setEmployee] = useState(null);
-  const [form, setForm] = useState(initialForm);
+  const [employeeId, setEmployeeId] = useState<string>("1");
+  const [employee, setEmployee] = useState<Employee | null>(null);
+  const [form, setForm] = useState<Record<string, string>>(initialForm);
   const [countdown, setCountdown] = useState(0);
-  const [logs, setLogs] = useState([]);
+  const [logs, setLogs] = useState<LaborerLog[]>([]);
   const [error, setError] = useState("");
   const efficiency = calculateEfficiency(form);
   const status =
@@ -40,22 +44,23 @@ export default function LoginPage() {
   }, [employee]);
 
   async function fetchLogs() {
+    if (!employee) return;
     try {
       const data = await laborerData.list();
       setLogs(data.filter((log) => log.laborers_id === employee.id));
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Request failed");
     }
   }
 
-  async function onEmployeeLogin(e) {
+  async function onEmployeeLogin(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     try {
       const data = await labers.employee(Number(employeeId));
       setEmployee(data);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Request failed");
     }
   }
 
@@ -67,7 +72,7 @@ export default function LoginPage() {
     return () => window.clearInterval(timer);
   }, [countdown]);
 
-  async function onSubmit(e) {
+  async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (countdown > 0) return;
 
@@ -80,12 +85,14 @@ export default function LoginPage() {
         laborers_id: employee.id,
         output: Number(form.output),
         smv: Number(form.smv),
+        manpower: Number(form.manpower),
+        working_minutes: Number(form.working_minutes),
         date: new Date().toISOString().slice(0, 10),
       });
       await fetchLogs();
       setForm(initialForm);
     } catch (err) {
-      setError(err.message);
+      setError(err instanceof Error ? err.message : "Request failed");
       return;
     }
     setCountdown(20);
@@ -156,8 +163,8 @@ export default function LoginPage() {
         onSubmit={onSubmit}
         className="rounded-2xl border border-white/10 bg-[#10182b]/90 p-6 shadow-2xl md:p-8"
       >
-        <div className="grid gap-5 sm:grid-cols-3">
-          {["output", "smv"].map((field) => (
+        <div className="grid gap-5 sm:grid-cols-4">
+          {["output", "smv", "manpower", "working_minutes"].map((field) => (
             <label key={field} className="text-sm capitalize text-slate-300">
               {field.replaceAll("_", " ")}
               <input
@@ -213,7 +220,7 @@ export default function LoginPage() {
             </p>
             <p className="mt-2 text-xl font-medium text-white">{status}</p>
             <p className="mt-6 text-sm leading-6 text-slate-300">
-              (output x SMV) / 60 minutes x 100
+              (output x SMV) / (working minutes x manpower) x 100
             </p>
           </section>
         </div>
@@ -257,7 +264,7 @@ export default function LoginPage() {
                     <td className="py-3 pr-4">{log.laborers_id}</td>
                     <td className="py-3 pr-4">{log.output}</td>
                     <td className="py-3 pr-4">{log.smv}</td>
-                    <td className="py-3 pr-4">60</td>
+                    <td className="py-3 pr-4">{log.working_minutes}</td>
                     <td className="py-3 pr-4">{Number(log.efficiency).toFixed(2)}%</td>
                     <td className="py-3 font-medium text-amber-300">{log.status}</td>
                   </tr>
