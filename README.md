@@ -154,10 +154,9 @@ Run a backend syntax check from `backend`:
 Make sure the backend virtual environment is active and install the requirements again:
 
 ```powershell
-cd backend
+cd "C:\Users\ME\Desktop\R26-IT-140-job-card-project\JOB-CARD\backend"
 .\venv\Scripts\Activate.ps1
-python -m pip install -r requirements.txt
-```
+python app.py
 
 ### Frontend cannot reach the API
 
