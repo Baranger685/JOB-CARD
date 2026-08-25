@@ -48,6 +48,10 @@ export default function LoginPage() {
   const averageDayEfficiency = todayLogs.length
     ? todayLogs.reduce((total, log) => total + Number(log.efficiency), 0) / todayLogs.length
     : null;
+  const workedMinutes = todayLogs.reduce((total, log) => total + Number(log.working_minutes), 0);
+  const targetMinutes = Number(plan.workingHours) * 60;
+  const hasCompletedDay = targetMinutes > 0 && workedMinutes >= targetMinutes;
+  const completedDayAverage = hasCompletedDay ? averageDayEfficiency : null;
   const todayOutput = todayLogs.reduce((total, log) => total + Number(log.output), 0);
   const targetOutput = Number(plan.dailyTargetOutput);
   const targetProgress = targetOutput > 0 ? Math.min((todayOutput / targetOutput) * 100, 100) : null;
@@ -267,7 +271,7 @@ export default function LoginPage() {
             <div className="rounded-lg bg-amber-400/10 p-4">
               <p className="text-xs uppercase tracking-wider text-amber-200">Average day efficiency</p>
               <p className="mt-2 text-2xl font-semibold text-white">
-                {averageDayEfficiency === null ? "--" : `${averageDayEfficiency.toFixed(2)}%`}
+                {completedDayAverage === null ? "--" : `${completedDayAverage.toFixed(2)}%`}
               </p>
             </div>
           </div>
