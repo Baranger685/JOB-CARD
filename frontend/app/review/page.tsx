@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { laborerData, type DayEndSummary } from "@/lib/api";
 
 function localDateIso(date: Date) {
@@ -40,9 +41,9 @@ export default function ReviewPage() {
             <h1 className="mt-2 text-3xl font-semibold text-white">End-of-day efficiency</h1>
             <p className="mt-2 text-sm text-slate-400">Review each employee&apos;s daily average and low-efficiency flags.</p>
           </div>
-          <a href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/15">
-            Employee job card
-          </a>
+          <Link href="/" className="rounded-lg bg-white/10 px-4 py-2 text-sm text-slate-200 hover:bg-white/15">
+            Sign out
+          </Link>
         </div>
 
         <section className="mt-8 rounded-2xl border border-white/10 bg-[#10182b]/90 p-6 shadow-2xl md:p-8">

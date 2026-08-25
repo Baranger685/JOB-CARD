@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, type FormEvent } from "react";
+import Link from "next/link";
 import { labers, laborerData, type Employee, type LaborerLog } from "@/lib/api";
 
 const initialForm = {
@@ -190,6 +191,12 @@ export default function LoginPage() {
           <button className="mt-6 w-full rounded-lg bg-amber-400 py-2.5 font-medium text-slate-900 hover:bg-amber-300">
             Open hourly card
           </button>
+          <Link
+            href="/review"
+            className="mt-3 block w-full rounded-lg border border-white/10 bg-white/5 py-2.5 text-center text-sm text-slate-200 hover:bg-white/10"
+          >
+            Review dashboard
+          </Link>
         </form>
       </main>
     );
@@ -395,6 +402,7 @@ export default function LoginPage() {
           </div>
         )}
       </section>
+
     </main>
   );
 }
