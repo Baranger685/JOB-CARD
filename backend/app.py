@@ -232,6 +232,50 @@ def get_laborer_logs() -> Any:
     return jsonify(query("SELECT * FROM laborers_data ORDER BY date DESC, time DESC"))
 
 
+@app.get("/api/labers/day-end")
+def get_day_end_summary() -> Any:
+    report_date = request.args.get("date") or datetime.now().date().isoformat()
+    low_threshold = 60
+
+    if not database_configured():
+        data = read_data()
+        logs_by_employee: dict[int, list[dict[str, Any]]] = {}
+        for row in data["laborers_data"]:
+            if (row.get("date") or "")[:10] == report_date:
+                logs_by_employee.setdefault(int(row["laborers_id"]), []).append(row)
+
+        employees = []
+        for employee in data["labers"]:
+            employee_logs = logs_by_employee.get(employee["id"], [])
+            efficiencies = [float(row["efficiency"]) for row in employee_logs]
+            average = sum(efficiencies) / len(efficiencies) if efficiencies else None
+            employees.append({
+                "employee_id": employee["id"],
+                "employee_name": employee["name"],
+                "entries": len(employee_logs),
+                "total_output": sum(float(row["output"]) for row in employee_logs),
+                "average_efficiency": average,
+                "low_efficiency": average is not None and average < low_threshold,
+            })
+        return jsonify(date=report_date, low_threshold=low_threshold, employees=employees)
+
+    employees = query(
+        """SELECT l.id AS employee_id, l.name AS employee_name,
+                  COUNT(d.id) AS entries, COALESCE(SUM(d.output), 0) AS total_output,
+                  AVG(d.efficiency) AS average_efficiency
+           FROM labers l
+           LEFT JOIN laborers_data d ON d.laborers_id = l.id AND d.date::date = %s
+           GROUP BY l.id, l.name ORDER BY l.id ASC""",
+        (report_date,),
+    )
+    for employee in employees:
+        average = float(employee["average_efficiency"]) if employee["average_efficiency"] is not None else None
+        employee["total_output"] = float(employee["total_output"])
+        employee["average_efficiency"] = average
+        employee["low_efficiency"] = average is not None and average < low_threshold
+    return jsonify(date=report_date, low_threshold=low_threshold, employees=employees)
+
+
 @app.get("/api/labers/analysis/<int:laborers_id>")
 @auth_required
 def get_analysis(laborers_id: int) -> Any:

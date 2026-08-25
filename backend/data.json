@@ -85,6 +85,17 @@
       "working_minutes": 60.0,
       "date": "2026-08-24",
       "status": "HIGH"
+    },
+    {
+      "id": 8,
+      "laborers_id": 1,
+      "output": 40.0,
+      "efficiency": 53.333333333333336,
+      "smv": 0.8,
+      "manpower": 1.0,
+      "working_minutes": 60.0,
+      "date": "2026-08-25",
+      "status": "LOW"
     }
   ],
   "supervisor_data": []

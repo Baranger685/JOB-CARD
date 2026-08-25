@@ -17,6 +17,21 @@ export type LaborerLog = {
   date: string;
 };
 
+export type DayEndEmployee = {
+  employee_id: number;
+  employee_name: string;
+  entries: number;
+  total_output: number;
+  average_efficiency: number | null;
+  low_efficiency: boolean;
+};
+
+export type DayEndSummary = {
+  date: string;
+  low_threshold: number;
+  employees: DayEndEmployee[];
+};
+
 const API = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5001";
 
 type RequestOptions = {
@@ -48,4 +63,5 @@ export const labers = {
 export const laborerData = {
   create: (body: Record<string, unknown>) => api<LaborerLog>("/api/labers/laborers", { method: "POST", body }),
   list: () => api<LaborerLog[]>("/api/labers/laborers"),
+  dayEnd: (date: string) => api<DayEndSummary>(`/api/labers/day-end?date=${encodeURIComponent(date)}`),
 };

@@ -10,6 +10,11 @@ const initialForm = {
   working_minutes: "60",
 };
 
+const initialPlan = {
+  dailyTargetOutput: "",
+  workingHours: "8",
+};
+
 function calculateEfficiency(form: Record<string, string>) {
   const output = Number(form.output);
   const smv = Number(form.smv);
@@ -20,14 +25,32 @@ function calculateEfficiency(form: Record<string, string>) {
   return (output * smv) / (workingMinutes * manpower) * 100;
 }
 
+function localDateIso(date: Date) {
+  const offset = date.getTimezoneOffset() * 60000;
+  return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
 export default function LoginPage() {
   const [employeeId, setEmployeeId] = useState<string>("1");
   const [employee, setEmployee] = useState<Employee | null>(null);
   const [form, setForm] = useState<Record<string, string>>(initialForm);
+  const [plan, setPlan] = useState(initialPlan);
+  const [today, setToday] = useState("");
+  const [todayIso, setTodayIso] = useState("");
+  const [currentTime, setCurrentTime] = useState("");
   const [countdown, setCountdown] = useState(0);
   const [logs, setLogs] = useState<LaborerLog[]>([]);
   const [error, setError] = useState("");
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [refreshMessage, setRefreshMessage] = useState("");
   const efficiency = calculateEfficiency(form);
+  const todayLogs = todayIso ? logs.filter((log) => log.date?.slice(0, 10) === todayIso) : [];
+  const averageDayEfficiency = todayLogs.length
+    ? todayLogs.reduce((total, log) => total + Number(log.efficiency), 0) / todayLogs.length
+    : null;
+  const todayOutput = todayLogs.reduce((total, log) => total + Number(log.output), 0);
+  const targetOutput = Number(plan.dailyTargetOutput);
+  const targetProgress = targetOutput > 0 ? Math.min((todayOutput / targetOutput) * 100, 100) : null;
   const status =
     efficiency === null
       ? "Waiting for values"
@@ -39,17 +62,46 @@ export default function LoginPage() {
 
 
   useEffect(() => {
+    function updateClock() {
+      const currentDate = new Date();
+      setTodayIso(localDateIso(currentDate));
+      setToday(currentDate.toLocaleDateString(undefined, {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
+      }));
+      setCurrentTime(currentDate.toLocaleTimeString(undefined, {
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      }));
+    }
+
+    updateClock();
+    const timer = window.setInterval(updateClock, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
     if (!employee) return;
     fetchLogs();
   }, [employee]);
 
-  async function fetchLogs() {
+  async function fetchLogs(showMessage = false) {
     if (!employee) return;
+    if (showMessage) {
+      setIsRefreshing(true);
+      setRefreshMessage("");
+    }
     try {
       const data = await laborerData.list();
       setLogs(data.filter((log) => log.laborers_id === employee.id));
+      if (showMessage) setRefreshMessage("Log refreshed");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Request failed");
+    } finally {
+      if (showMessage) setIsRefreshing(false);
     }
   }
 
@@ -87,7 +139,7 @@ export default function LoginPage() {
         smv: Number(form.smv),
         manpower: Number(form.manpower),
         working_minutes: Number(form.working_minutes),
-        date: new Date().toISOString().slice(0, 10),
+        date: localDateIso(new Date()),
       });
       await fetchLogs();
       setForm(initialForm);
@@ -145,9 +197,17 @@ export default function LoginPage() {
         <p className="text-xs uppercase tracking-[0.25em] text-amber-400">
           Hourly workforce
         </p>
-        <h1 className="mt-2 text-3xl font-semibold text-white">
-          Hourly job card
-        </h1>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-semibold text-white">Hourly job card</h1>
+            <p className="mt-2 text-sm text-slate-400">
+              {today || "Loading date..."} {currentTime && `at ${currentTime}`}
+            </p>
+          </div>
+          <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-3 py-1 text-xs font-medium uppercase tracking-wider text-emerald-300">
+            Live date
+          </span>
+        </div>
         <p className="mt-2 max-w-xl text-slate-400">
           Employee #{employee.id}: {employee.name}. Enter the output for the current 60-minute hour.
         </p>
@@ -157,6 +217,61 @@ export default function LoginPage() {
             {error}
           </p>
         )}
+
+        <section className="mt-8 rounded-2xl border border-white/10 bg-[#10182b]/90 p-6 shadow-2xl md:p-8">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <div>
+              <h2 className="text-lg font-medium text-white">Daily plan</h2>
+              <p className="mt-1 text-sm text-slate-400">Values supplied by the planning model.</p>
+            </div>
+            <p className="text-sm text-slate-400">
+              {today || "Loading date..."} {currentTime && `at ${currentTime}`}
+            </p>
+          </div>
+          <div className="mt-6 grid gap-5 sm:grid-cols-2">
+            <label className="text-sm text-slate-300">
+              Daily target output
+              <input
+                min="0"
+                step="any"
+                type="number"
+                value={plan.dailyTargetOutput}
+                placeholder="Enter model target"
+                onChange={(e) => setPlan({ ...plan, dailyTargetOutput: e.target.value })}
+                className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white outline-none placeholder:text-slate-600 focus:border-amber-400"
+              />
+            </label>
+            <label className="text-sm text-slate-300">
+              Working hours
+              <input
+                min="0"
+                step="0.5"
+                type="number"
+                value={plan.workingHours}
+                onChange={(e) => setPlan({ ...plan, workingHours: e.target.value })}
+                className="mt-2 w-full rounded-lg border border-white/10 bg-white/5 px-3 py-2.5 text-white outline-none focus:border-amber-400"
+              />
+            </label>
+          </div>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            <div className="rounded-lg bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-wider text-slate-500">Today output</p>
+              <p className="mt-2 text-2xl font-semibold text-white">{todayOutput.toFixed(2)}</p>
+            </div>
+            <div className="rounded-lg bg-white/5 p-4">
+              <p className="text-xs uppercase tracking-wider text-slate-500">Target progress</p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {targetProgress === null ? "--" : `${targetProgress.toFixed(1)}%`}
+              </p>
+            </div>
+            <div className="rounded-lg bg-amber-400/10 p-4">
+              <p className="text-xs uppercase tracking-wider text-amber-200">Average day efficiency</p>
+              <p className="mt-2 text-2xl font-semibold text-white">
+                {averageDayEfficiency === null ? "--" : `${averageDayEfficiency.toFixed(2)}%`}
+              </p>
+            </div>
+          </div>
+        </section>
 
         <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_280px]">
       <form
@@ -236,12 +351,14 @@ export default function LoginPage() {
           </div>
           <button
             type="button"
-            onClick={fetchLogs}
-            className="rounded-lg bg-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/15"
+            onClick={() => void fetchLogs(true)}
+            disabled={isRefreshing}
+            className="rounded-lg bg-white/10 px-3 py-2 text-sm text-slate-200 hover:bg-white/15 disabled:cursor-wait disabled:opacity-60"
           >
-            Refresh log
+            {isRefreshing ? "Refreshing..." : "Refresh log"}
           </button>
         </div>
+        {refreshMessage && <p className="mt-3 text-sm text-emerald-300">{refreshMessage}</p>}
 
         {logs.length === 0 ? (
           <p className="mt-6 text-sm text-slate-500">No calculations saved yet.</p>
